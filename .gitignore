@@ -1,0 +1,12 @@
+venv/
+data/
+__pycache__/
+*.pyc
+.env
+node_modules/
+frontend/dist/
+.DS_Store
+scripts/audit_validated.json
+scripts/audit_report.json
+scrapers/.browser_data*/
+scrapers/page_dump.html
