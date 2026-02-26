@@ -97,7 +97,7 @@ function addMonths(ym, n) {
 export default function Dashboard() {
   const [chartData, setChartData] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [location, setLocation] = useState('Płatnicza')
+  const [location, setLocation] = useState('Płatnicza 65')
   const [windowMonths, setWindowMonths] = useState(36) // 0 = all
   const [offset, setOffset] = useState(0) // 0 = most recent, positive = further back
   const [aggregation, setAggregation] = useState('month')
