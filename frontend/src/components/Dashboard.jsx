@@ -98,7 +98,7 @@ export default function Dashboard() {
   const [chartData, setChartData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [location, setLocation] = useState('Płatnicza 65')
-  const [windowMonths, setWindowMonths] = useState(36) // 0 = all
+  const [windowMonths, setWindowMonths] = useState(12) // 0 = all
   const [offset, setOffset] = useState(0) // 0 = most recent, positive = further back
   const [aggregation, setAggregation] = useState('month')
 
@@ -251,7 +251,7 @@ export default function Dashboard() {
       </div>
 
       {/* Summary cards */}
-      <SummaryCards series={chartData.series} windowStart={windowStart} windowEnd={windowEnd} />
+      <SummaryCards series={chartData.series} windowStart={windowStart} windowEnd={windowEnd} windowMonths={windowMonths} />
 
       {/* ═══ TIME RANGE & AGGREGATION TOOLBAR ═══ */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-3 flex items-center justify-between flex-wrap gap-3">
@@ -456,7 +456,7 @@ function CumulativeTooltip({ active, payload, label, aggregation }) {
   )
 }
 
-function SummaryCards({ series, windowStart, windowEnd }) {
+function SummaryCards({ series, windowStart, windowEnd, windowMonths }) {
   const summaries = []
 
   // Group by provider
@@ -518,6 +518,7 @@ function SummaryCards({ series, windowStart, windowEnd }) {
       records: allData.length,
       lastCost: lastRecord.cost_gross,
       costTrend,
+      windowMonths,
     })
   }
 
@@ -551,7 +552,9 @@ function SummaryCards({ series, windowStart, windowEnd }) {
               </div>
             </div>
             <div className="flex items-center justify-between mt-2">
-              <p className="text-xs text-gray-400">{s.records} faktur</p>
+              <p className="text-xs text-gray-400">
+                {s.records} faktur ({s.windowMonths === 0 ? 'całość' : s.windowMonths === 12 ? '1 rok' : s.windowMonths === 24 ? '2 lata' : s.windowMonths === 36 ? '3 lata' : `${s.windowMonths} mies.`})
+              </p>
               {s.costTrend !== null && (
                 <p className={`text-xs font-semibold flex items-center gap-1 ${trendColor}`}>
                   <TrendIcon className="w-3 h-3" />
