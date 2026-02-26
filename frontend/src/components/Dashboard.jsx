@@ -97,7 +97,7 @@ function addMonths(ym, n) {
 export default function Dashboard() {
   const [chartData, setChartData] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [location, setLocation] = useState('')
+  const [location, setLocation] = useState('Płatnicza')
   const [windowMonths, setWindowMonths] = useState(36) // 0 = all
   const [offset, setOffset] = useState(0) // 0 = most recent, positive = further back
   const [aggregation, setAggregation] = useState('month')
@@ -251,7 +251,7 @@ export default function Dashboard() {
       </div>
 
       {/* Summary cards */}
-      <SummaryCards series={chartData.series} />
+      <SummaryCards series={chartData.series} windowStart={windowStart} windowEnd={windowEnd} />
 
       {/* ═══ TIME RANGE & AGGREGATION TOOLBAR ═══ */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-3 flex items-center justify-between flex-wrap gap-3">
@@ -456,7 +456,7 @@ function CumulativeTooltip({ active, payload, label, aggregation }) {
   )
 }
 
-function SummaryCards({ series }) {
+function SummaryCards({ series, windowStart, windowEnd }) {
   const summaries = []
 
   // Group by provider
@@ -471,10 +471,35 @@ function SummaryCards({ series }) {
     const cfg = PROVIDER_CONFIG[provider]
     if (!cfg) continue
 
-    const allData = provSeries.flatMap(s => s.data.filter(d => !d.is_estimate))
+    let allData = provSeries.flatMap(s => s.data.filter(d => !d.is_estimate))
     if (allData.length === 0) continue
 
-    const totalCost = allData.reduce((sum, d) => sum + (d.cost_gross || 0), 0)
+    // Filter by window period if specified
+    if (windowStart && windowEnd) {
+      allData = allData.filter(d => {
+        if (!d.period_start) return false
+        const months = getMonthsBetween(d.period_start, d.period_end || d.period_start)
+        // Include invoice if any of its months fall within the window
+        return months.some(ym => ym >= windowStart && ym <= windowEnd)
+      })
+    }
+
+    // Calculate total cost for filtered data, proportionally distributed across months
+    let totalCost = 0
+    for (const d of allData) {
+      const cost = d.cost_gross || 0
+      if (!cost || !d.period_start) continue
+      
+      const months = getMonthsBetween(d.period_start, d.period_end || d.period_start)
+      if (windowStart && windowEnd) {
+        // Count only months within the window
+        const monthsInWindow = months.filter(ym => ym >= windowStart && ym <= windowEnd)
+        const perMonth = cost / months.length
+        totalCost += perMonth * monthsInWindow.length
+      } else {
+        totalCost += cost
+      }
+    }
     const sorted = [...allData].sort((a, b) => (a.period_start || '').localeCompare(b.period_start || ''))
     const lastRecord = sorted[sorted.length - 1]
     const prevRecord = sorted.length > 1 ? sorted[sorted.length - 2] : null
